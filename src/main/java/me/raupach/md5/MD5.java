@@ -47,9 +47,12 @@ public class MD5 implements Serializable {
 	    swap(0x76543210)
 	};
 	
+	// Padding
+	
+	// Iterate through blocks
 	
 	
-	// print pretty string
+	// Pretty string
 	StringBuilder sb = new StringBuilder(32);
 	sb.append(Integer.toHexString(swap(md[0])));
 	sb.append(Integer.toHexString(swap(md[1])));

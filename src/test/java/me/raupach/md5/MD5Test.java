@@ -23,6 +23,8 @@
  */
 package me.raupach.md5;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -34,6 +36,24 @@ public class MD5Test {
 	assertEquals(0xeb86d391, MD5.T[63]);
     }
     
+    @Test
+    public void swap() {
+	MD5 md5 = new MD5();
+	assertEquals(0x0f000000, md5.swap(0x0000000f));
+	assertEquals(0xabcdef00, md5.swap(0x00efcdab));
+    }
+    
+    @Test
+    public void testHash() {
+	MD5 md5 = new MD5();
+	assertEquals("d41d8cd98f00b204e9800998ecf8427e", md5.hash("".getBytes(StandardCharsets.ISO_8859_1)));
+	assertEquals("0cc175b9c0f1b6a831c399e269772661", md5.hash("a".getBytes(StandardCharsets.ISO_8859_1)));
+	assertEquals("900150983cd24fb0d6963f7d28e17f72", md5.hash("abc".getBytes(StandardCharsets.ISO_8859_1)));
+	assertEquals("f96b697d7cb7938d525a2f31aaf161d0", md5.hash("message digest".getBytes(StandardCharsets.ISO_8859_1)));
+	assertEquals("c3fcd3d76192e4007dfb496cca67e13b", md5.hash("abcdefghijklmnopqrstuvwxyz".getBytes(StandardCharsets.ISO_8859_1)));
+	assertEquals("d174ab98d277d9f5a5611c2c9f419d9f", md5.hash("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".getBytes(StandardCharsets.ISO_8859_1)));
+	assertEquals("57edf4a22be3c955ac49da2e2107b67a", md5.hash("12345678901234567890123456789012345678901234567890123456789012345678901234567890".getBytes(StandardCharsets.ISO_8859_1)));
+    }
 
     @Test
     public void test() {
@@ -64,13 +84,6 @@ public class MD5Test {
 	// d41d8cd98f00b204e9800998ecf8427e
 	MD5 md5 = new MD5();
 	md5.update(md, x);
-    }
-    
-    @Test
-    public void swap() {
-	MD5 md5 = new MD5();
-	assertEquals(0x0f000000, md5.swap(0x0000000f));
-	assertEquals(0xabcdef00, md5.swap(0x00efcdab));
     }
     
 }
