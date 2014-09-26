@@ -27,15 +27,20 @@ import java.io.Serializable;
 import static java.lang.Math.abs;
 import static java.lang.Math.sin;
 import static java.lang.Integer.rotateLeft;
+import java.nio.charset.StandardCharsets;
 
 public class MD5 implements Serializable {
     
     static final int T[] = new int[64]; 
     static {
 	for (int i = 0; i < 64; i++) {
-	    Double e = abs(sin(i+1)) * 4294967296L;
+	    Double e = abs(sin(i + 1)) * 4294967296L;
 	    T[i] = (int) (e.longValue());
 	}
+    }
+    
+    public String hash(String s) {
+	return hash(s.getBytes(StandardCharsets.ISO_8859_1));
     }
     
     public String hash(byte[] bytes) {
@@ -48,17 +53,57 @@ public class MD5 implements Serializable {
 	};
 	
 	// Padding
+	bytes = pad(bytes);
 	
-	// Iterate through blocks
+	// Iterate through the 512 bit blocks and update state
+	int x[] = new int[16];
+	for (int i = 0; i < bytes.length; i += 64) {
+	    x[ 0 + i] = btoi(bytes[ 0 + i], bytes[ 0 + i + 1], bytes[ 0 + i + 2], bytes[ 0 + i + 3]);
+	    x[ 1 + i] = btoi(bytes[ 1 + i], bytes[ 1 + i + 1], bytes[ 1 + i + 2], bytes[ 1 + i + 3]);
+	    x[ 2 + i] = btoi(bytes[ 2 + i], bytes[ 2 + i + 1], bytes[ 2 + i + 2], bytes[ 2 + i + 3]);
+	    x[ 3 + i] = btoi(bytes[ 3 + i], bytes[ 3 + i + 1], bytes[ 3 + i + 2], bytes[ 3 + i + 3]);
+	    x[ 4 + i] = btoi(bytes[ 4 + i], bytes[ 4 + i + 1], bytes[ 4 + i + 2], bytes[ 4 + i + 3]);
+	    x[ 5 + i] = btoi(bytes[ 5 + i], bytes[ 5 + i + 1], bytes[ 5 + i + 2], bytes[ 5 + i + 3]);
+	    x[ 6 + i] = btoi(bytes[ 6 + i], bytes[ 6 + i + 1], bytes[ 6 + i + 2], bytes[ 6 + i + 3]);
+	    x[ 7 + i] = btoi(bytes[ 7 + i], bytes[ 7 + i + 1], bytes[ 7 + i + 2], bytes[ 7 + i + 3]);
+	    x[ 8 + i] = btoi(bytes[ 8 + i], bytes[ 8 + i + 1], bytes[ 8 + i + 2], bytes[ 8 + i + 3]);
+	    x[ 9 + i] = btoi(bytes[ 9 + i], bytes[ 9 + i + 1], bytes[ 9 + i + 2], bytes[ 9 + i + 3]);
+	    x[10 + i] = btoi(bytes[10 + i], bytes[10 + i + 1], bytes[10 + i + 2], bytes[10 + i + 3]);
+	    x[11 + i] = btoi(bytes[11 + i], bytes[11 + i + 1], bytes[11 + i + 2], bytes[11 + i + 3]);
+	    x[12 + i] = btoi(bytes[12 + i], bytes[12 + i + 1], bytes[12 + i + 2], bytes[12 + i + 3]);
+	    x[13 + i] = btoi(bytes[13 + i], bytes[13 + i + 1], bytes[13 + i + 2], bytes[13 + i + 3]);
+	    x[14 + i] = btoi(bytes[14 + i], bytes[14 + i + 1], bytes[14 + i + 2], bytes[14 + i + 3]);
+	    x[15 + i] = btoi(bytes[15 + i], bytes[15 + i + 1], bytes[15 + i + 2], bytes[15 + i + 3]);
+	    update(md, x);
+	}
 	
-	
-	// Pretty string
+	// Return a pretty string
 	StringBuilder sb = new StringBuilder(32);
 	sb.append(Integer.toHexString(swap(md[0])));
 	sb.append(Integer.toHexString(swap(md[1])));
 	sb.append(Integer.toHexString(swap(md[2])));
 	sb.append(Integer.toHexString(swap(md[3])));
 	return sb.toString();
+    }
+    
+    /* Adds padding */
+    byte[] pad(byte[] bytes) {
+	byte[] length = ltob(bytes.length * 8);
+	int padBytes = 64 - bytes.length % 64;
+	// We need at least 8 bytes for the length
+	if (padBytes < 8) {
+	    padBytes += 64;
+	}
+	byte[] padding = new byte[padBytes - 8];
+	if (padding.length > 0) {
+	    padding[0] = -128;
+	}
+	
+	byte[] dest = new byte[bytes.length + padding.length + 8];
+	System.arraycopy(bytes, 0, dest, 0, bytes.length);
+	System.arraycopy(padding, 0, dest, bytes.length, padding.length);
+	System.arraycopy(length, 0, dest, bytes.length + padding.length, 8);
+	return dest;
     }
     
     
@@ -178,6 +223,41 @@ public class MD5 implements Serializable {
 		| ((n >>  8) & 0xff) << 16 
 	        | ((n >> 16) & 0xff) << 8 
 		| ((n >> 24) & 0xff);
+    }
+    
+    /* bytes to little endian integer */
+    int btoi(byte a, byte b, byte c, byte d) {
+	int n = 0;
+	n |= d & 0xff;
+	n <<= 8;
+	n |= c & 0xff;
+	n <<= 8;
+	n |= b & 0xff;
+	n <<= 8;
+	n |= a & 0xff;
+	return n;
+    }
+    
+    /* long to bytes */
+    byte[] ltob(long l) {
+	byte[] b = new byte[8];
+	// low order bytes first
+	b[3] = (byte) (l & 0xff);
+	l >>>= 8;
+	b[2] = (byte) (l & 0xff);
+	l >>>= 8;
+	b[1] = (byte) (l & 0xff);
+	l >>>= 8;
+	b[0] = (byte) (l & 0xff);
+	// hight order bytes last
+	b[7] = (byte) (l & 0xff);
+	l >>>= 8;
+	b[5] = (byte) (l & 0xff);
+	l >>>= 8;
+	b[4] = (byte) (l & 0xff);
+	l >>>= 8;
+	b[3] = (byte) (l & 0xff);
+	return b;
     }
     
 }
